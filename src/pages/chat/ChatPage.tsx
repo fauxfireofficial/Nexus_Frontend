@@ -613,6 +613,7 @@ export const ChatPage: React.FC = () => {
   // Load message history with selected user and poll
   useEffect(() => {
     const fetchMessages = async () => {
+      if (!currentUser) return;
       if (userId) {
         try {
           const res = await api.get(`/chat/history/${userId}`);
@@ -998,7 +999,7 @@ export const ChatPage: React.FC = () => {
                 <div className="flex space-x-2 items-center">
                   {currentUser.role === 'admin' && isSupportActive && (
                     <Button
-                      variant="destructive"
+                      variant="error"
                       size="sm"
                       className="rounded-full px-3 py-1 font-bold bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-900/50 shadow-sm transition-colors"
                       onClick={handleEndSupport}
@@ -1296,9 +1297,15 @@ export const ChatPage: React.FC = () => {
           )}
         </div>
 
-        {/* Info panel */}
+        {/* Info panel — mobile: full-screen overlay, desktop: side panel */}
         {showInfoPanel && chatPartner && (
-          <div className="w-80 border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex flex-col h-full overflow-hidden shrink-0 animate-fade-in">
+          <React.Fragment>
+            {/* Mobile backdrop */}
+            <div
+              className="fixed inset-0 bg-black/40 z-40 md:hidden"
+              onClick={() => setShowInfoPanel(false)}
+            />
+          <div className="fixed inset-y-0 right-0 w-full max-w-sm z-50 md:static md:w-80 md:z-auto border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex flex-col h-full overflow-hidden shrink-0 animate-fade-in shadow-2xl md:shadow-none">
             {/* Header */}
             <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50">
               <h3 className="font-semibold text-gray-900 dark:text-white text-xs uppercase tracking-wider">{t('Contact Information')}</h3>
@@ -1594,6 +1601,7 @@ export const ChatPage: React.FC = () => {
               </div>
             </div>
           </div>
+          </React.Fragment>
         )}
       </div>
 
