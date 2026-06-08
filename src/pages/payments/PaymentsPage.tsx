@@ -163,7 +163,12 @@ const StripeDepositForm: React.FC<StripeDepositFormProps> = ({
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Card Details
         </label>
-        <div className="p-3 border border-gray-300 dark:border-gray-750 bg-white dark:bg-gray-950 rounded-md focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 transition-all">
+        <div className="p-3 border border-gray-300 dark:border-gray-750 bg-white dark:bg-gray-950 rounded-md focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 transition-all relative">
+          {!stripe && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-950 rounded-md z-10">
+              <span className="text-xs text-gray-500 animate-pulse">Loading secure payment element... (Please ensure Stripe is not blocked)</span>
+            </div>
+          )}
           <CardElement
             options={{
               style: {
