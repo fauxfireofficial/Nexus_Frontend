@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Lock, Bell, Globe, Palette, CreditCard } from 'lucide-react';
+import { User, Lock, Bell, Globe, Palette, CreditCard, Eye, EyeOff, Shield, ShieldCheck } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -26,6 +26,14 @@ export const SettingsPage: React.FC = () => {
   } = useLocale();
   
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'language' | 'appearance' | 'billing'>('profile');
+
+  // Password visibility toggles
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
+
+  // Two-Factor Authentication state
+  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
   
   if (!user) return null;
 
@@ -151,13 +159,29 @@ export const SettingsPage: React.FC = () => {
                 <div>
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-4">{t('Two-Factor Authentication')}</h3>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {t('Add an extra layer of security to your account')}
-                      </p>
-                      <Badge variant="error" className="mt-1">{t('Not Enabled')}</Badge>
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-full transition-colors duration-300 ${
+                        twoFAEnabled
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                      }`}>
+                        {twoFAEnabled ? <ShieldCheck size={20} /> : <Shield size={20} />}
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {t('Add an extra layer of security to your account')}
+                        </p>
+                        <Badge variant={twoFAEnabled ? 'success' : 'error'} className="mt-1">
+                          {twoFAEnabled ? t('Enabled') : t('Not Enabled')}
+                        </Badge>
+                      </div>
                     </div>
-                    <Button variant="outline">{t('Enable')}</Button>
+                    <Button
+                      variant={twoFAEnabled ? 'outline' : 'primary'}
+                      onClick={() => setTwoFAEnabled(!twoFAEnabled)}
+                    >
+                      {twoFAEnabled ? t('Disable') : t('Enable')}
+                    </Button>
                   </div>
                 </div>
                 
@@ -166,17 +190,47 @@ export const SettingsPage: React.FC = () => {
                   <div className="space-y-4">
                     <Input
                       label={t('Current Password')}
-                      type="password"
+                      type={showCurrentPw ? 'text' : 'password'}
+                      endAdornment={
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPw(!showCurrentPw)}
+                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none"
+                          tabIndex={-1}
+                        >
+                          {showCurrentPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      }
                     />
-                    
+
                     <Input
                       label={t('New Password')}
-                      type="password"
+                      type={showNewPw ? 'text' : 'password'}
+                      endAdornment={
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPw(!showNewPw)}
+                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none"
+                          tabIndex={-1}
+                        >
+                          {showNewPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      }
                     />
-                    
+
                     <Input
                       label={t('Confirm New Password')}
-                      type="password"
+                      type={showConfirmPw ? 'text' : 'password'}
+                      endAdornment={
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPw(!showConfirmPw)}
+                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none"
+                          tabIndex={-1}
+                        >
+                          {showConfirmPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      }
                     />
                     
                     <div className="flex justify-end">
