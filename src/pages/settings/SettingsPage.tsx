@@ -24,7 +24,7 @@ export const SettingsPage: React.FC = () => {
     currency,
     setCurrency,
   } = useLocale();
-  
+
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'language' | 'appearance' | 'billing'>('profile');
 
   // Password visibility toggles
@@ -32,9 +32,17 @@ export const SettingsPage: React.FC = () => {
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
 
-  // Two-Factor Authentication state
-  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
-  
+  // Two-Factor Authentication state — persisted in localStorage
+  const [twoFAEnabled, setTwoFAEnabled] = useState<boolean>(
+    () => localStorage.getItem('nexus_2fa_enabled') === 'true'
+  );
+
+  const handleToggle2FA = () => {
+    const next = !twoFAEnabled;
+    setTwoFAEnabled(next);
+    localStorage.setItem('nexus_2fa_enabled', String(next));
+  };
+
   if (!user) return null;
 
   const tabs = [
@@ -45,14 +53,14 @@ export const SettingsPage: React.FC = () => {
     { id: 'appearance', name: t('Appearance Settings'), icon: Palette },
     { id: 'billing', name: t('Billing & Subscriptions'), icon: CreditCard },
   ];
-  
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors duration-300">{t('Settings')}</h1>
         <p className="text-gray-600 dark:text-gray-400 transition-colors duration-300">{t('Manage your account preferences and settings')}</p>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Settings navigation */}
         <Card className="lg:col-span-1 h-fit">
@@ -65,11 +73,10 @@ export const SettingsPage: React.FC = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-                      isActive
+                    className={`flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${isActive
                         ? 'text-primary-700 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                    }`}
+                      }`}
                   >
                     <Icon size={18} className="mr-3" />
                     {tab.name}
@@ -79,7 +86,7 @@ export const SettingsPage: React.FC = () => {
             </nav>
           </CardBody>
         </Card>
-        
+
         {/* Main settings content */}
         <div className="lg:col-span-3 space-y-6">
           {/* Profile Settings */}
@@ -95,7 +102,7 @@ export const SettingsPage: React.FC = () => {
                     alt={user.name}
                     size="xl"
                   />
-                  
+
                   <div>
                     <Button variant="outline" size="sm">
                       {t('Change Photo')}
@@ -105,31 +112,34 @@ export const SettingsPage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Input
                     label={t('Full Name')}
                     defaultValue={user.name}
                   />
-                  
+
                   <Input
                     label={t('Email')}
                     type="email"
-                    defaultValue={user.email}
+                    value={user.email}
+                    disabled
+                    readOnly
+                    helperText={t('Email cannot be changed')}
                   />
-                  
+
                   <Input
                     label={t('Role')}
                     value={user.role}
                     disabled
                   />
-                  
+
                   <Input
                     label={t('Location')}
                     defaultValue="San Francisco, CA"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     {t('Bio')}
@@ -140,7 +150,7 @@ export const SettingsPage: React.FC = () => {
                     defaultValue={user.bio}
                   ></textarea>
                 </div>
-                
+
                 <div className="flex justify-end gap-3">
                   <Button variant="outline">{t('Cancel')}</Button>
                   <Button>{t('Save Changes')}</Button>
@@ -148,7 +158,7 @@ export const SettingsPage: React.FC = () => {
               </CardBody>
             </Card>
           )}
-          
+
           {/* Security Settings */}
           {activeTab === 'security' && (
             <Card>
@@ -156,41 +166,46 @@ export const SettingsPage: React.FC = () => {
                 <h2 className="text-lg font-medium text-gray-900 dark:text-white">{t('Security Settings')}</h2>
               </CardHeader>
               <CardBody className="space-y-6">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-4">{t('Two-Factor Authentication')}</h3>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-full transition-colors duration-300 ${
-                        twoFAEnabled
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
-                      }`}>
-                        {twoFAEnabled ? <ShieldCheck size={20} /> : <Shield size={20} />}
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {t('Add an extra layer of security to your account')}
-                        </p>
-                        <Badge variant={twoFAEnabled ? 'success' : 'error'} className="mt-1">
-                          {twoFAEnabled ? t('Enabled') : t('Not Enabled')}
-                        </Badge>
-                      </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2.5 rounded-xl transition-all duration-300 ${
+                      twoFAEnabled
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 shadow-sm'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                    }`}>
+                      {twoFAEnabled ? <ShieldCheck size={22} /> : <Shield size={22} />}
                     </div>
-                    <Button
-                      variant={twoFAEnabled ? 'outline' : 'primary'}
-                      onClick={() => setTwoFAEnabled(!twoFAEnabled)}
-                    >
-                      {twoFAEnabled ? t('Disable') : t('Enable')}
-                    </Button>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{t('Two-Factor Authentication')}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {twoFAEnabled
+                          ? t('Your account has an extra layer of protection')
+                          : t('Add an extra layer of security to your account')}
+                      </p>
+                      <Badge variant={twoFAEnabled ? 'success' : 'error'} className="mt-1.5">
+                        {twoFAEnabled ? t('Enabled') : t('Not Enabled')}
+                      </Badge>
+                    </div>
                   </div>
+                  {/* Professional toggle switch */}
+                  <label className="relative inline-flex items-center cursor-pointer" title={twoFAEnabled ? 'Disable 2FA' : 'Enable 2FA'}>
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={twoFAEnabled}
+                      onChange={handleToggle2FA}
+                    />
+                    <div className="w-12 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-500/30 rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 transition-colors duration-300"></div>
+                  </label>
                 </div>
-                
+
                 <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-4">{t('Change Password')}</h3>
                   <div className="space-y-4">
                     <Input
                       label={t('Current Password')}
                       type={showCurrentPw ? 'text' : 'password'}
+                      fullWidth
                       endAdornment={
                         <button
                           type="button"
@@ -206,6 +221,7 @@ export const SettingsPage: React.FC = () => {
                     <Input
                       label={t('New Password')}
                       type={showNewPw ? 'text' : 'password'}
+                      fullWidth
                       endAdornment={
                         <button
                           type="button"
@@ -221,6 +237,7 @@ export const SettingsPage: React.FC = () => {
                     <Input
                       label={t('Confirm New Password')}
                       type={showConfirmPw ? 'text' : 'password'}
+                      fullWidth
                       endAdornment={
                         <button
                           type="button"
@@ -232,7 +249,7 @@ export const SettingsPage: React.FC = () => {
                         </button>
                       }
                     />
-                    
+
                     <div className="flex justify-end">
                       <Button>{t('Update Password')}</Button>
                     </div>
@@ -393,11 +410,10 @@ export const SettingsPage: React.FC = () => {
                     {/* Light theme option */}
                     <button
                       onClick={() => setTheme('light')}
-                      className={`relative flex flex-col items-center p-4 rounded-xl border-2 text-left transition-all duration-300 ${
-                        theme === 'light'
+                      className={`relative flex flex-col items-center p-4 rounded-xl border-2 text-left transition-all duration-300 ${theme === 'light'
                           ? 'border-primary-600 bg-primary-50/30 dark:bg-primary-950/10 ring-2 ring-primary-500/20'
                           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
-                      }`}
+                        }`}
                     >
                       {/* Theme preview skeleton */}
                       <div className="w-full h-24 bg-gray-150 rounded-lg p-2 mb-3 border border-gray-200 flex flex-col justify-between">
@@ -422,11 +438,10 @@ export const SettingsPage: React.FC = () => {
                     {/* Dark theme option */}
                     <button
                       onClick={() => setTheme('dark')}
-                      className={`relative flex flex-col items-center p-4 rounded-xl border-2 text-left transition-all duration-300 ${
-                        theme === 'dark'
+                      className={`relative flex flex-col items-center p-4 rounded-xl border-2 text-left transition-all duration-300 ${theme === 'dark'
                           ? 'border-primary-600 bg-primary-50/30 dark:bg-primary-950/10 ring-2 ring-primary-500/20'
                           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
-                      }`}
+                        }`}
                     >
                       {/* Theme preview skeleton */}
                       <div className="w-full h-24 bg-gray-900 rounded-lg p-2 mb-3 border border-gray-800 flex flex-col justify-between">
@@ -451,11 +466,10 @@ export const SettingsPage: React.FC = () => {
                     {/* System theme option */}
                     <button
                       onClick={() => setTheme('system')}
-                      className={`relative flex flex-col items-center p-4 rounded-xl border-2 text-left transition-all duration-300 ${
-                        theme === 'system'
+                      className={`relative flex flex-col items-center p-4 rounded-xl border-2 text-left transition-all duration-300 ${theme === 'system'
                           ? 'border-primary-600 bg-primary-50/30 dark:bg-primary-950/10 ring-2 ring-primary-500/20'
                           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
-                      }`}
+                        }`}
                     >
                       {/* Theme preview skeleton (split half/half light & dark) */}
                       <div className="w-full h-24 rounded-lg mb-3 border border-gray-200 dark:border-gray-700 flex overflow-hidden">
